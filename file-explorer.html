@@ -1,0 +1,28 @@
+<style>
+  .file-explorer {
+    display: flex;
+    align-items: stretch;
+    min-height: 400px;
+    width: 90%;
+    margin: 20px auto;
+    border: 1px solid black;
+  }
+  #left-panel {
+    flex: 0 1 33.333333333%;
+    border-right: 1px solid black;
+    padding: 10px;
+  }
+  .folder-children {
+    padding-left: 15px;
+  }
+  #right-panel {
+    flex: 0 1 66.66666666%;
+  }
+</style>
+<body>
+  <div class="file-explorer">
+    <div id="left-panel"></div>
+    <div id="right-panel"></div>
+  </div>
+  <script src="./file-explorer.js"></script>
+</body>

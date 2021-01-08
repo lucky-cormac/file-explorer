@@ -69,8 +69,22 @@ function LeftPanel(containerId, root) {
   this.selectedFolder = root;
 }
 
-function renderFolderNodes(root, level) {
-  
+function generateFolderNodesDom(node, level) {
+  if (node.type === NODE_TYPES.FILE) {
+    return '';
+  }
+  var result = '<div class="folder-level-' + level + '">' + node.name + '</div>';
+  if (!node.children) {
+    return result;
+  }
+
+  result += '<div class="folder-children">';
+  for (var i = 0; i < node.children.length; i++) {
+    result += generateFolderNodesDom(node.children[i], level + 1);
+  }
+  result += '</div>';
+
+  return result;
 }
 
 LeftPanel.prototype.getRoot = function() {
@@ -90,5 +104,9 @@ LeftPanel.prototype.setSelectedFolder = function(selectedFolder) {
 }
 
 LeftPanel.prototype.render = function() {
-  
+  var nodesDom = generateFolderNodesDom(this.root, 0);
+  document.getElementById(this.containerId).innerHTML = nodesDom;
 };
+
+var leftPanel = new LeftPanel('left-panel', data);
+leftPanel.render();
