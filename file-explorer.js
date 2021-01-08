@@ -11,11 +11,19 @@ const data = {
       size: null,
       children: [
         {
-          type: 'file',
-          name: 'Document.txt',
+          type: 'folder',
+          name: 'ChildDocuments',
           modified: new Date(),
-          size: 1024,
-          children: null
+          size: null,
+          children: [
+            {
+              type: 'file',
+              name: 'Document.txt',
+              modified: new Date(),
+              size: 1024,
+              children: null
+            }
+          ]
         }
       ]
     }, {
@@ -51,7 +59,8 @@ var NODE_TYPES = {
   FOLDER: 'folder'
 };
 
-function TreeNode(type, name, modified, size, children) {
+function TreeNode(id, type, name, modified, size, children) {
+  this.id = id;
   this.type = type;
   this.name = name;
   this.modified = modified;
@@ -79,20 +88,43 @@ function LeftPanel(containerId, root) {
 
 function generateFolderNodesDom(node, level) {
   if (node.type === NODE_TYPES.FILE) {
-    return '';
-  }
-  var result = '<div class="folder-level-' + level + '">' + node.name + '</div>';
-  if (!node.children || !node.expanded) {
-    return result;
+    return null;
   }
 
-  result += '<div class="folder-children">';
-  for (var i = 0; i < node.children.length; i++) {
-    result += generateFolderNodesDom(node.children[i], level + 1);
-  }
-  result += '</div>';
+  var child = null;
+  var container = document.createElement('div');
 
-  return result;
+  var folderEntry = document.createElement('div');
+  folderEntry.className = 'folder-level-' + level;
+  folderEntry.addEventListener('click', function() {
+    node.toggleExpansion();
+
+    if (!node.children) {
+      return;
+    }
+
+    if (node.expanded) {
+      for (var i = 0; i < node.children.length; i++) {
+        child = generateFolderNodesDom(node.children[i], level + 1);
+        if (child) {
+          document.getElementById(node.id + '-children').appendChild(child);
+        }
+      }
+    } else {
+      document.getElementById(node.id + '-children').innerHTML = '';
+    }
+  });
+  var folderName = document.createTextNode(node.name);
+  folderEntry.appendChild(folderName);
+
+  var folderChildren = document.createElement('div');
+  folderChildren.className = 'folder-children';
+  folderChildren.id = node.id + '-children';
+
+  container.appendChild(folderEntry);
+  container.appendChild(folderChildren);
+
+  return container;
 }
 
 LeftPanel.prototype.getRoot = function() {
@@ -112,18 +144,19 @@ LeftPanel.prototype.setSelectedFolder = function(selectedFolder) {
 }
 
 LeftPanel.prototype.render = function() {
-  var nodesDom = generateFolderNodesDom(this.root, 0);
-  document.getElementById(this.containerId).innerHTML = nodesDom;
+  var nodesDom = generateFolderNodesDom(this.root, 1);
+  document.getElementById(this.containerId).appendChild(nodesDom);
 };
 
-function generateTreeNodes(data) {
-  var treeNode = new TreeNode(data.type, data.name, data.modified, data.size, null);
+function generateTreeNodes(data, level) {
+  var nodeLevel = level || 1;
+  var treeNode = new TreeNode(data.name + '-' + nodeLevel, data.type, data.name, data.modified, data.size, null);
   if (data.type === NODE_TYPES.FILE || !data.children) {
     return treeNode;
   }
   treeNode.children = [];
   data.children.forEach(function(child) {
-    treeNode.addChild(generateTreeNodes(child)); 
+    treeNode.addChild(generateTreeNodes(child, nodeLevel + 1)); 
   });
   return treeNode;
 }
