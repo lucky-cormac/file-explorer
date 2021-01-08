@@ -133,7 +133,7 @@ LeftPanel.prototype.render = function() {
     iconContainer.className = 'caret-icon';
     if (nodeHasChildFolder(node)) {
       var caretIcon = document.createElement('i');
-      caretIcon.className = 'fas fa-caret-right';
+      caretIcon.className = node.expanded ? 'fas fa-caret-down' : 'fas fa-caret-right';
       caretIcon.addEventListener('click', function() {
         node.toggleExpansion();
         toggleCaretIcon(this);
@@ -162,6 +162,10 @@ LeftPanel.prototype.render = function() {
   function addFolderWrapper(nodeDom, node) {
     var folderWrapper = document.createElement('div');
     folderWrapper.className = 'folder-wrapper';
+    if (panelRef.selectedFolder === node) {
+      folderWrapper.className = 'folder-wrapper selected';
+    }
+
     folderWrapper.addEventListener('click', function() {
       panelRef.selectedFolder = node;
       var folderWrappers = document.getElementsByClassName('folder-wrapper');
@@ -186,6 +190,7 @@ LeftPanel.prototype.render = function() {
       return null;
     }
   
+    var child = null;
     var container = document.createElement('div');
   
     var folderEntry = document.createElement('div');
@@ -198,6 +203,15 @@ LeftPanel.prototype.render = function() {
     var folderChildren = document.createElement('div');
     folderChildren.className = 'folder-children';
     folderChildren.id = node.id + '-children';
+
+    if (node.expanded && node.children) {
+      for (var i = 0; i < node.children.length; i++) {
+        child = generateFolderNodesDom(node.children[i]);
+        if (child) {
+          folderChildren.appendChild(child);
+        }
+      }
+    }
   
     container.appendChild(folderEntry);
     container.appendChild(folderChildren);
