@@ -57,9 +57,17 @@ function TreeNode(type, name, modified, size, children) {
   this.modified = modified;
   this.size = size;
   this.children = children;
+  this.expanded = false;
 }
 
+TreeNode.prototype.toggleExpansion = function() {
+  this.expanded = !this.expanded;
+};
+
 TreeNode.prototype.addChild = function(child) {
+  if (!this.children) {
+    this.children = [];
+  }
   this.children.push(child);
 };
 
@@ -74,7 +82,7 @@ function generateFolderNodesDom(node, level) {
     return '';
   }
   var result = '<div class="folder-level-' + level + '">' + node.name + '</div>';
-  if (!node.children) {
+  if (!node.children || !node.expanded) {
     return result;
   }
 
@@ -108,5 +116,17 @@ LeftPanel.prototype.render = function() {
   document.getElementById(this.containerId).innerHTML = nodesDom;
 };
 
-var leftPanel = new LeftPanel('left-panel', data);
+function generateTreeNodes(data) {
+  var treeNode = new TreeNode(data.type, data.name, data.modified, data.size, null);
+  if (data.type === NODE_TYPES.FILE || !data.children) {
+    return treeNode;
+  }
+  treeNode.children = [];
+  data.children.forEach(function(child) {
+    treeNode.addChild(generateTreeNodes(child)); 
+  });
+  return treeNode;
+}
+
+var leftPanel = new LeftPanel('left-panel', generateTreeNodes(data));
 leftPanel.render();
