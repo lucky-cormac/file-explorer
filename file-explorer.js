@@ -103,6 +103,8 @@ LeftPanel.prototype.setSelectedFolder = function(selectedFolder) {
 }
 
 LeftPanel.prototype.render = function() {
+  var panelRef = this;
+
   function nodeHasChildFolder(node) {
     if (!node.children || !node.children.length) {
       return false;
@@ -127,42 +129,56 @@ LeftPanel.prototype.render = function() {
 
   function addCaretIcon(nodeDom, node) {
     var child = null;
-    var caretIcon = document.createElement('i');
-    caretIcon.classList.add('caret-icon');
+    var iconContainer = document.createElement('div');
+    iconContainer.className = 'caret-icon';
     if (nodeHasChildFolder(node)) {
-      caretIcon.classList.add('fas', 'fa-caret-right');
-    }
-    caretIcon.addEventListener('click', function() {
-      node.toggleExpansion();
-      toggleCaretIcon(this);
-  
-      if (!node.children) {
-        return;
-      }
-  
-      if (node.expanded) {
-        for (var i = 0; i < node.children.length; i++) {
-          child = generateFolderNodesDom(node.children[i]);
-          if (child) {
-            document.getElementById(node.id + '-children').appendChild(child);
-          }
+      var caretIcon = document.createElement('i');
+      caretIcon.className = 'fas fa-caret-right';
+      caretIcon.addEventListener('click', function() {
+        node.toggleExpansion();
+        toggleCaretIcon(this);
+    
+        if (!node.children) {
+          return;
         }
-      } else {
-        document.getElementById(node.id + '-children').innerHTML = '';
-      }
-    });
-    nodeDom.appendChild(caretIcon);
+    
+        if (node.expanded) {
+          for (var i = 0; i < node.children.length; i++) {
+            child = generateFolderNodesDom(node.children[i]);
+            if (child) {
+              document.getElementById(node.id + '-children').appendChild(child);
+            }
+          }
+        } else {
+          document.getElementById(node.id + '-children').innerHTML = '';
+        }
+      });
+      iconContainer.appendChild(caretIcon);
+    }
+    
+    nodeDom.appendChild(iconContainer);
   }
 
-  function addFolderIcon(nodeDom) {
+  function addFolderWrapper(nodeDom, node) {
+    var folderWrapper = document.createElement('div');
+    folderWrapper.className = 'folder-wrapper';
+    folderWrapper.addEventListener('click', function() {
+      panelRef.selectedFolder = node;
+      var folderWrappers = document.getElementsByClassName('folder-wrapper');
+      for (var i = 0; i < folderWrappers.length; i++) {
+        folderWrappers[i].classList.remove('selected');
+      }
+      this.classList.add('selected');
+    });
+
     var folderIcon = document.createElement('i');
     folderIcon.className = 'folder-icon fas fa-folder-open';
-    nodeDom.appendChild(folderIcon);
-  }
+    folderWrapper.appendChild(folderIcon);
 
-  function addFolderName(nodeDom, node) {
     var folderName = document.createTextNode(node.name);
-    nodeDom.appendChild(folderName);
+    folderWrapper.appendChild(folderName);
+
+    nodeDom.appendChild(folderWrapper);
   }
 
   function generateFolderNodesDom(node) {
@@ -174,10 +190,10 @@ LeftPanel.prototype.render = function() {
   
     var folderEntry = document.createElement('div');
     folderEntry.className = 'folder-entry';
+    folderEntry.id = node.id + '-entry';
 
     addCaretIcon(folderEntry, node);
-    addFolderIcon(folderEntry);
-    addFolderName(folderEntry, node);
+    addFolderWrapper(folderEntry, node);
   
     var folderChildren = document.createElement('div');
     folderChildren.className = 'folder-children';
