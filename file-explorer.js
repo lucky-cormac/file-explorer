@@ -86,47 +86,6 @@ function LeftPanel(containerId, root) {
   this.selectedFolder = root;
 }
 
-function generateFolderNodesDom(node, level) {
-  if (node.type === NODE_TYPES.FILE) {
-    return null;
-  }
-
-  var child = null;
-  var container = document.createElement('div');
-
-  var folderEntry = document.createElement('div');
-  folderEntry.className = 'folder-level-' + level;
-  folderEntry.addEventListener('click', function() {
-    node.toggleExpansion();
-
-    if (!node.children) {
-      return;
-    }
-
-    if (node.expanded) {
-      for (var i = 0; i < node.children.length; i++) {
-        child = generateFolderNodesDom(node.children[i], level + 1);
-        if (child) {
-          document.getElementById(node.id + '-children').appendChild(child);
-        }
-      }
-    } else {
-      document.getElementById(node.id + '-children').innerHTML = '';
-    }
-  });
-  var folderName = document.createTextNode(node.name);
-  folderEntry.appendChild(folderName);
-
-  var folderChildren = document.createElement('div');
-  folderChildren.className = 'folder-children';
-  folderChildren.id = node.id + '-children';
-
-  container.appendChild(folderEntry);
-  container.appendChild(folderChildren);
-
-  return container;
-}
-
 LeftPanel.prototype.getRoot = function() {
   return this.root;
 };
@@ -144,7 +103,93 @@ LeftPanel.prototype.setSelectedFolder = function(selectedFolder) {
 }
 
 LeftPanel.prototype.render = function() {
-  var nodesDom = generateFolderNodesDom(this.root, 1);
+  function nodeHasChildFolder(node) {
+    if (!node.children || !node.children.length) {
+      return false;
+    }
+    for (var i = 0; i < node.children.length; i++) {
+      if (node.children[i].type === NODE_TYPES.FOLDER) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function toggleCaretIcon(icon) {
+    if (icon.classList.contains('fa-caret-right')) {
+      icon.classList.remove('fa-caret-right');
+      icon.classList.add('fa-caret-down');
+    } else if (icon.classList.contains('fa-caret-down')) {
+      icon.classList.remove('fa-caret-down');
+      icon.classList.add('fa-caret-right');
+    }
+  }
+
+  function addCaretIcon(nodeDom, node) {
+    var child = null;
+    var caretIcon = document.createElement('i');
+    caretIcon.classList.add('caret-icon');
+    if (nodeHasChildFolder(node)) {
+      caretIcon.classList.add('fas', 'fa-caret-right');
+    }
+    caretIcon.addEventListener('click', function() {
+      node.toggleExpansion();
+      toggleCaretIcon(this);
+  
+      if (!node.children) {
+        return;
+      }
+  
+      if (node.expanded) {
+        for (var i = 0; i < node.children.length; i++) {
+          child = generateFolderNodesDom(node.children[i]);
+          if (child) {
+            document.getElementById(node.id + '-children').appendChild(child);
+          }
+        }
+      } else {
+        document.getElementById(node.id + '-children').innerHTML = '';
+      }
+    });
+    nodeDom.appendChild(caretIcon);
+  }
+
+  function addFolderIcon(nodeDom) {
+    var folderIcon = document.createElement('i');
+    folderIcon.className = 'folder-icon fas fa-folder-open';
+    nodeDom.appendChild(folderIcon);
+  }
+
+  function addFolderName(nodeDom, node) {
+    var folderName = document.createTextNode(node.name);
+    nodeDom.appendChild(folderName);
+  }
+
+  function generateFolderNodesDom(node) {
+    if (node.type === NODE_TYPES.FILE) {
+      return null;
+    }
+  
+    var container = document.createElement('div');
+  
+    var folderEntry = document.createElement('div');
+    folderEntry.className = 'folder-entry';
+
+    addCaretIcon(folderEntry, node);
+    addFolderIcon(folderEntry);
+    addFolderName(folderEntry, node);
+  
+    var folderChildren = document.createElement('div');
+    folderChildren.className = 'folder-children';
+    folderChildren.id = node.id + '-children';
+  
+    container.appendChild(folderEntry);
+    container.appendChild(folderChildren);
+  
+    return container;
+  }
+
+  var nodesDom = generateFolderNodesDom(this.root);
   document.getElementById(this.containerId).appendChild(nodesDom);
 };
 
