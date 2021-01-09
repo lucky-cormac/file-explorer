@@ -1,64 +1,10 @@
-const data = {
-  type: 'folder',
-  name: 'Files',
-  modified: new Date(),
-  size: null,
-  children: [
-    {
-      type: 'folder',
-      name: 'Documents',
-      modified: new Date(),
-      size: null,
-      children: [
-        {
-          type: 'folder',
-          name: 'ChildDocuments',
-          modified: new Date(),
-          size: null,
-          children: [
-            {
-              type: 'file',
-              name: 'Document.txt',
-              modified: new Date(),
-              size: 1024,
-              children: null
-            }
-          ]
-        }
-      ]
-    }, {
-      type: 'folder',
-      name: 'Images',
-      modified: new Date(),
-      size: null,
-      children: []
-    }, {
-      type: 'folder',
-      name: 'System',
-      modified: new Date(),
-      size: null,
-      children: []
-    }, {
-      type: 'file',
-      name: 'Description.rtf',
-      modified: new Date(),
-      size: 1024,
-      children: null
-    }, {
-      type: 'file',
-      name: 'Description.txt',
-      modified: new Date(),
-      size: 2048,
-      children: null
-    }
-  ]
-};
-
+// Node types
 var NODE_TYPES = {
   FILE: 'file',
   FOLDER: 'folder'
 };
 
+// TreeNode Structure
 function TreeNode(id, type, name, modified, size, children) {
   this.id = id;
   this.type = type;
@@ -80,30 +26,44 @@ TreeNode.prototype.addChild = function(child) {
   this.children.push(child);
 };
 
-function LeftPanel(containerId, root) {
+function generateTreeNodes(data, level) {
+  var nodeLevel = level || 1;
+  var treeNode = new TreeNode(data.name + '-' + nodeLevel, data.type, data.name, data.modified, data.size, null);
+  if (data.type === NODE_TYPES.FILE || !data.children) {
+    return treeNode;
+  }
+  treeNode.children = [];
+  data.children.forEach(function(child) {
+    treeNode.addChild(generateTreeNodes(child, nodeLevel + 1)); 
+  });
+  return treeNode;
+}
+
+// File Explorer
+function FileExplorer(containerId, root) {
   this.containerId = containerId;
   this.root = root;
   this.selectedFolder = root;
 }
 
-LeftPanel.prototype.getRoot = function() {
+FileExplorer.prototype.getRoot = function() {
   return this.root;
 };
 
-LeftPanel.prototype.setRoot = function(root) {
+FileExplorer.prototype.setRoot = function(root) {
   this.root = root;
 };
 
-LeftPanel.prototype.getSelectedFolder = function() {
+FileExplorer.prototype.getSelectedFolder = function() {
   return this.selectedFolder;
 };
 
-LeftPanel.prototype.setSelectedFolder = function(selectedFolder) {
+FileExplorer.prototype.setSelectedFolder = function(selectedFolder) {
   this.selectedFolder = selectedFolder;
 }
 
-LeftPanel.prototype.render = function() {
-  var panelRef = this;
+FileExplorer.prototype.render = function() {
+  var explorerRef = this;
 
   function nodeHasChildFolder(node) {
     if (!node.children || !node.children.length) {
@@ -162,12 +122,12 @@ LeftPanel.prototype.render = function() {
   function addFolderWrapper(nodeDom, node) {
     var folderWrapper = document.createElement('div');
     folderWrapper.className = 'folder-wrapper';
-    if (panelRef.selectedFolder === node) {
+    if (explorerRef.selectedFolder === node) {
       folderWrapper.className = 'folder-wrapper selected';
     }
 
     folderWrapper.addEventListener('click', function() {
-      panelRef.selectedFolder = node;
+      explorerRef.selectedFolder = node;
       var folderWrappers = document.getElementsByClassName('folder-wrapper');
       for (var i = 0; i < folderWrappers.length; i++) {
         folderWrappers[i].classList.remove('selected');
@@ -219,22 +179,30 @@ LeftPanel.prototype.render = function() {
     return container;
   }
 
-  var nodesDom = generateFolderNodesDom(this.root);
-  document.getElementById(this.containerId).appendChild(nodesDom);
-};
-
-function generateTreeNodes(data, level) {
-  var nodeLevel = level || 1;
-  var treeNode = new TreeNode(data.name + '-' + nodeLevel, data.type, data.name, data.modified, data.size, null);
-  if (data.type === NODE_TYPES.FILE || !data.children) {
-    return treeNode;
+  function generateFolderViewFrame() {
+    var table = document.createElement('table');
+    table.setAttribute('cellspacing', '0');
+    table.setAttribute('cellpadding', '7');
+    var thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Name</th><th>Date Modified</th><th>File Size</th></tr>';
+    var tbody = document.createElement('tbody');
+    tbody.id = 'folder-view-body';
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    return table;
   }
-  treeNode.children = [];
-  data.children.forEach(function(child) {
-    treeNode.addChild(generateTreeNodes(child, nodeLevel + 1)); 
-  });
-  return treeNode;
-}
 
-var leftPanel = new LeftPanel('left-panel', generateTreeNodes(data));
-leftPanel.render();
+  var folderNodesDom = generateFolderNodesDom(this.root);
+  var leftPanel = document.createElement('div');
+  leftPanel.className = 'left-panel';
+  leftPanel.appendChild(folderNodesDom);
+  
+  var folderViewFrame = generateFolderViewFrame();
+  var rightPanel = document.createElement('div');
+  rightPanel.className = 'right-panel';
+  rightPanel.appendChild(folderViewFrame);
+
+  var explorerContainer = document.getElementById(this.containerId);
+  explorerContainer.appendChild(leftPanel);
+  explorerContainer.appendChild(rightPanel);
+};
