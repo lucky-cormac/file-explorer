@@ -43,7 +43,6 @@ function generateTreeNodes(data, level) {
 function FileExplorer(containerId, root) {
   this.containerId = containerId;
   this.root = root;
-  this.selectedFolder = root;
 }
 
 FileExplorer.prototype.getRoot = function() {
@@ -133,6 +132,13 @@ FileExplorer.prototype.render = function() {
         folderWrappers[i].classList.remove('selected');
       }
       this.classList.add('selected');
+
+      var folderItemsDom = generateFolderViewDom(node);
+      var folderViewFrame = document.getElementById('folder-view');
+      if (folderViewFrame.children.length === 2) {
+        folderViewFrame.children[1].remove();
+      }
+      folderViewFrame.appendChild(folderItemsDom);
     });
 
     var folderIcon = document.createElement('i');
@@ -181,15 +187,57 @@ FileExplorer.prototype.render = function() {
 
   function generateFolderViewFrame() {
     var table = document.createElement('table');
+    table.id = 'folder-view';
     table.setAttribute('cellspacing', '0');
     table.setAttribute('cellpadding', '7');
     var thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Name</th><th>Date Modified</th><th>File Size</th></tr>';
-    var tbody = document.createElement('tbody');
-    tbody.id = 'folder-view-body';
+    thead.innerHTML = '<tr><th class="item-icon"></th><th class="item-name">Name</th><th class="item-modified">Date Modified</th><th class="item-size">File Size</th></tr>';
     table.appendChild(thead);
-    table.appendChild(tbody);
     return table;
+  }
+
+  function generateItemViewEntry(node) {
+    var itemIcon = document.createElement('i');
+    itemIcon.className = node.type === NODE_TYPES.FOLDER ? 'item-icon fas fa-folder-open' : 'item-icon far fa-file';
+    var itemName = document.createTextNode(node.name);
+    var itemModified = document.createTextNode(node.modified.toLocaleDateString());
+    var itemSize = document.createTextNode(node.size ? node.size + 'KB' : '');
+
+    var itemIconContainer = document.createElement('td');
+    itemIconContainer.className = 'item-icon';
+    itemIconContainer.appendChild(itemIcon);
+
+    var itemNameContainer = document.createElement('td');
+    itemNameContainer.className = 'item-name';
+    itemNameContainer.appendChild(itemName);
+
+    var itemModifiedContainer = document.createElement('td');
+    itemModifiedContainer.className = 'item-modified';
+    itemModifiedContainer.appendChild(itemModified);
+
+    var itemSizeContainer = document.createElement('td');
+    itemSizeContainer.className = 'item-size';
+    itemSizeContainer.appendChild(itemSize);
+
+    var itemViewEntry = document.createElement('tr');
+    itemViewEntry.appendChild(itemIconContainer);
+    itemViewEntry.appendChild(itemNameContainer);
+    itemViewEntry.appendChild(itemModifiedContainer);
+    itemViewEntry.appendChild(itemSizeContainer);
+
+    return itemViewEntry;
+  }
+
+  function generateFolderViewDom(node) {
+    var folderViewBody = document.createElement('tbody');
+
+    if (node.children) {
+      for (var i = 0; i < node.children.length; i++) {
+        folderViewBody.appendChild(generateItemViewEntry(node.children[i]));
+      }
+    }
+  
+    return folderViewBody;
   }
 
   var folderNodesDom = generateFolderNodesDom(this.root);
