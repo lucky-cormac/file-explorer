@@ -63,6 +63,8 @@ function generateTreeNodes(data, level) {
 function FileExplorer(containerId, root) {
   this.containerId = containerId;
   this.root = root;
+  this.selectedFolder = null;
+  this.selectedFolderItem = null;
 }
 
 FileExplorer.prototype.getRoot = function() {
@@ -79,6 +81,14 @@ FileExplorer.prototype.getSelectedFolder = function() {
 
 FileExplorer.prototype.setSelectedFolder = function(selectedFolder) {
   this.selectedFolder = selectedFolder;
+}
+
+FileExplorer.prototype.getSelectedFolderItem = function() {
+  return this.selectedFolderItem;
+};
+
+FileExplorer.prototype.setSelectedFolderItem = function(selectedFolderItem) {
+  this.selectedFolderItem = selectedFolderItem;
 }
 
 FileExplorer.prototype.render = function() {
@@ -141,17 +151,18 @@ FileExplorer.prototype.render = function() {
   function addFolderWrapper(nodeDom, node) {
     var folderWrapper = document.createElement('div');
     folderWrapper.className = CSS_CLASSES.FOLDER_WRAPPER;
-    if (explorerRef.selectedFolder === node) {
+    if (explorerRef.getSelectedFolder() === node) {
       folderWrapper.className = CSS_CLASSES.FOLDER_WRAPPER + ' ' + CSS_CLASSES.SELECTED;
     }
 
     folderWrapper.addEventListener('click', function() {
-      explorerRef.selectedFolder = node;
+      explorerRef.setSelectedFolder(node);
+      explorerRef.setSelectedFolderItem(null);
       var folderWrappers = document.getElementsByClassName(CSS_CLASSES.FOLDER_WRAPPER);
       for (var i = 0; i < folderWrappers.length; i++) {
-        folderWrappers[i].classList.remove('selected');
+        folderWrappers[i].classList.remove(CSS_CLASSES.SELECTED);
       }
-      this.classList.add('selected');
+      this.classList.add(CSS_CLASSES.SELECTED);
 
       var folderItemsDom = generateFolderViewDom(node);
       var folderViewFrame = document.getElementsByClassName(CSS_CLASSES.FOLDER_VIEW)[0];
@@ -238,6 +249,17 @@ FileExplorer.prototype.render = function() {
     itemSizeContainer.appendChild(itemSize);
 
     var itemViewEntry = document.createElement('tr');
+    if (explorerRef.getSelectedFolderItem() === node) {
+      itemViewEntry.className = CSS_CLASSES.SELECTED;
+    }
+    itemViewEntry.addEventListener('click', function() {
+      explorerRef.setSelectedFolderItem(node);
+      var items = this.parentElement.children;
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.remove(CSS_CLASSES.SELECTED);
+      }
+      this.classList.add(CSS_CLASSES.SELECTED);
+    });
     itemViewEntry.appendChild(itemIconContainer);
     itemViewEntry.appendChild(itemNameContainer);
     itemViewEntry.appendChild(itemModifiedContainer);
