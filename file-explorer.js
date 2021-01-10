@@ -4,6 +4,26 @@ var NODE_TYPES = {
   FOLDER: 'folder'
 };
 
+var CSS_CLASSES = {
+  FOLDER_ENTRY: 'folder-entry',
+  FOLDER_CHILDREN: 'folder-children',
+  FOLDER_WRAPPER: 'folder-wrapper',
+  FOLDER_VIEW: 'folder-view',
+  SELECTED: 'selected',
+  CARET_ICON: 'caret-icon',
+  FA_CARET_DOWN: 'fas fa-caret-down',
+  FA_CARET_RIGHT: 'fas fa-caret-right',
+  FA_FOLDER_OPEN: 'fas fa-folder-open',
+  FA_FILE: 'far fa-file',
+  FOLDER_ICON: 'folder-icon',
+  ITEM_ICON: 'item-icon',
+  ITEM_NAME: 'item-name',
+  ITEM_MODIFIED: 'item-modified',
+  ITEM_SIZE: 'item-size',
+  LEFT_PANEL: 'left-panel',
+  RIGHT_PANEL: 'right-panel'
+};
+
 // TreeNode Structure
 function TreeNode(id, type, name, modified, size, children) {
   this.id = id;
@@ -89,10 +109,10 @@ FileExplorer.prototype.render = function() {
   function addCaretIcon(nodeDom, node) {
     var child = null;
     var iconContainer = document.createElement('div');
-    iconContainer.className = 'caret-icon';
+    iconContainer.className = CSS_CLASSES.CARET_ICON;
     if (nodeHasChildFolder(node)) {
       var caretIcon = document.createElement('i');
-      caretIcon.className = node.expanded ? 'fas fa-caret-down' : 'fas fa-caret-right';
+      caretIcon.className = node.expanded ? CSS_CLASSES.FA_CARET_DOWN : CSS_CLASSES.FA_CARET_RIGHT;
       caretIcon.addEventListener('click', function() {
         node.toggleExpansion();
         toggleCaretIcon(this);
@@ -105,11 +125,11 @@ FileExplorer.prototype.render = function() {
           for (var i = 0; i < node.children.length; i++) {
             child = generateFolderNodesDom(node.children[i]);
             if (child) {
-              document.getElementById(node.id + '-children').appendChild(child);
+              nodeDom.parentElement.children[1].appendChild(child);
             }
           }
         } else {
-          document.getElementById(node.id + '-children').innerHTML = '';
+          nodeDom.parentElement.children[1].innerHTML = '';
         }
       });
       iconContainer.appendChild(caretIcon);
@@ -120,29 +140,27 @@ FileExplorer.prototype.render = function() {
 
   function addFolderWrapper(nodeDom, node) {
     var folderWrapper = document.createElement('div');
-    folderWrapper.className = 'folder-wrapper';
+    folderWrapper.className = CSS_CLASSES.FOLDER_WRAPPER;
     if (explorerRef.selectedFolder === node) {
-      folderWrapper.className = 'folder-wrapper selected';
+      folderWrapper.className = CSS_CLASSES.FOLDER_WRAPPER + ' ' + CSS_CLASSES.SELECTED;
     }
 
     folderWrapper.addEventListener('click', function() {
       explorerRef.selectedFolder = node;
-      var folderWrappers = document.getElementsByClassName('folder-wrapper');
+      var folderWrappers = document.getElementsByClassName(CSS_CLASSES.FOLDER_WRAPPER);
       for (var i = 0; i < folderWrappers.length; i++) {
         folderWrappers[i].classList.remove('selected');
       }
       this.classList.add('selected');
 
       var folderItemsDom = generateFolderViewDom(node);
-      var folderViewFrame = document.getElementById('folder-view');
-      if (folderViewFrame.children.length === 2) {
-        folderViewFrame.children[1].remove();
-      }
+      var folderViewFrame = document.getElementsByClassName(CSS_CLASSES.FOLDER_VIEW)[0];
+      folderViewFrame.children[1].remove();
       folderViewFrame.appendChild(folderItemsDom);
     });
 
     var folderIcon = document.createElement('i');
-    folderIcon.className = 'folder-icon fas fa-folder-open';
+    folderIcon.className = CSS_CLASSES.FOLDER_ICON + ' ' + CSS_CLASSES.FA_FOLDER_OPEN;
     folderWrapper.appendChild(folderIcon);
 
     var folderName = document.createTextNode(node.name);
@@ -160,15 +178,13 @@ FileExplorer.prototype.render = function() {
     var container = document.createElement('div');
   
     var folderEntry = document.createElement('div');
-    folderEntry.className = 'folder-entry';
-    folderEntry.id = node.id + '-entry';
+    folderEntry.className = CSS_CLASSES.FOLDER_ENTRY;
 
     addCaretIcon(folderEntry, node);
     addFolderWrapper(folderEntry, node);
   
     var folderChildren = document.createElement('div');
-    folderChildren.className = 'folder-children';
-    folderChildren.id = node.id + '-children';
+    folderChildren.className = CSS_CLASSES.FOLDER_CHILDREN;
 
     if (node.expanded && node.children) {
       for (var i = 0; i < node.children.length; i++) {
@@ -187,36 +203,38 @@ FileExplorer.prototype.render = function() {
 
   function generateFolderViewFrame() {
     var table = document.createElement('table');
-    table.id = 'folder-view';
+    table.className = CSS_CLASSES.FOLDER_VIEW;
     table.setAttribute('cellspacing', '0');
     table.setAttribute('cellpadding', '7');
     var thead = document.createElement('thead');
     thead.innerHTML = '<tr><th class="item-icon"></th><th class="item-name">Name</th><th class="item-modified">Date Modified</th><th class="item-size">File Size</th></tr>';
+    var tbody = document.createElement('tbody');
     table.appendChild(thead);
+    table.appendChild(tbody);
     return table;
   }
 
   function generateItemViewEntry(node) {
     var itemIcon = document.createElement('i');
-    itemIcon.className = node.type === NODE_TYPES.FOLDER ? 'item-icon fas fa-folder-open' : 'item-icon far fa-file';
+    itemIcon.className = node.type === NODE_TYPES.FOLDER ? CSS_CLASSES.ITEM_ICON + ' ' + CSS_CLASSES.FA_FOLDER_OPEN : CSS_CLASSES.ITEM_ICON + ' ' + CSS_CLASSES.FA_FILE;
     var itemName = document.createTextNode(node.name);
     var itemModified = document.createTextNode(node.modified.toLocaleDateString());
     var itemSize = document.createTextNode(node.size ? node.size + 'KB' : '');
 
     var itemIconContainer = document.createElement('td');
-    itemIconContainer.className = 'item-icon';
+    itemIconContainer.className = CSS_CLASSES.ITEM_ICON;
     itemIconContainer.appendChild(itemIcon);
 
     var itemNameContainer = document.createElement('td');
-    itemNameContainer.className = 'item-name';
+    itemNameContainer.className = CSS_CLASSES.ITEM_NAME;
     itemNameContainer.appendChild(itemName);
 
     var itemModifiedContainer = document.createElement('td');
-    itemModifiedContainer.className = 'item-modified';
+    itemModifiedContainer.className = CSS_CLASSES.ITEM_MODIFIED;
     itemModifiedContainer.appendChild(itemModified);
 
     var itemSizeContainer = document.createElement('td');
-    itemSizeContainer.className = 'item-size';
+    itemSizeContainer.className = CSS_CLASSES.ITEM_SIZE;
     itemSizeContainer.appendChild(itemSize);
 
     var itemViewEntry = document.createElement('tr');
@@ -242,12 +260,12 @@ FileExplorer.prototype.render = function() {
 
   var folderNodesDom = generateFolderNodesDom(this.root);
   var leftPanel = document.createElement('div');
-  leftPanel.className = 'left-panel';
+  leftPanel.className = CSS_CLASSES.LEFT_PANEL;
   leftPanel.appendChild(folderNodesDom);
   
   var folderViewFrame = generateFolderViewFrame();
   var rightPanel = document.createElement('div');
-  rightPanel.className = 'right-panel';
+  rightPanel.className = CSS_CLASSES.RIGHT_PANEL;
   rightPanel.appendChild(folderViewFrame);
 
   var explorerContainer = document.getElementById(this.containerId);
